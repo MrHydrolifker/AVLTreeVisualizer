@@ -1,39 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>AVL Tree Visualizer - Interactive AVL Tree Generator</title>
-        
-        <!-- SEO Meta Tags -->
-        <meta name="description" content="Visualize AVL Tree creation step by step with rotations and balancing explanations. Interactive AVL Tree generator for learning and understanding AVL trees.">
-        <meta name="keywords" content="AVL Tree, AVL Tree Visualizer, AVL Tree Generator, Binary Search Tree, Self-Balancing Tree, Rotations, Data Structures, Tree Balancing">
-        <meta name="author" content="MrHydrolifker">
-        <meta name="robots" content="index, follow">
-    
-        <!-- Open Graph (OG) Tags for Social Media Sharing -->
-        <meta property="og:title" content="AVL Tree Visualizer - Interactive AVL Tree Generator">
-        <meta property="og:description" content="Learn AVL Tree balancing with this interactive visualizer that shows insertions, rotations, and balancing steps with diagrams.">
-        <meta property="og:image" content="URL_TO_A_PREVIEW_IMAGE">
-        <meta property="og:url" content="https://YOUR_WEBSITE_URL.com">
-        <meta property="og:type" content="website">
-    
-        <!-- Twitter Card for better Twitter previews -->
-        <meta name="twitter:card" content="summary_large_image">
-        <meta name="twitter:title" content="AVL Tree Visualizer - Learn AVL Trees Interactively">
-        <meta name="twitter:description" content="See AVL Tree insertions and rotations step by step in this interactive visualizer.">
-        <meta name="twitter:image" content="URL_TO_A_PREVIEW_IMAGE">
-    
-        <style>
-            /* Your existing CSS here */
-        </style>
-    </head>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AVL Tree Visualizer</title>
     <style>
-        
         body {
             font-family: Arial, sans-serif;
             text-align: center;
@@ -61,7 +32,7 @@
 </head>
 <body>
     <h1>AVL Tree Visualizer</h1>
-    <input type="text" id="numbers" placeholder="Enter numbers (comma-separated)">
+    <input type="text" id="numbers" placeholder="Enter numbers or letters (comma-separated)">
     <button onclick="buildTree()">Generate AVL Tree</button>
     <button onclick="showSteps()">Show Steps</button>
     <div class="steps-container" id="stepsContainer"></div>
@@ -115,8 +86,8 @@
 
             insert(node, value) {
                 if (!node) return new Node(value);
-                if (value < node.value) node.left = this.insert(node.left, value);
-                else if (value > node.value) node.right = this.insert(node.right, value);
+                if (value.toString() < node.value.toString()) node.left = this.insert(node.left, value);
+                else if (value.toString() > node.value.toString()) node.right = this.insert(node.right, value);
                 else return node;
 
                 node.height = Math.max(this.getHeight(node.left), this.getHeight(node.right)) + 1;
@@ -126,13 +97,13 @@
                     this.steps.push({ root: JSON.parse(JSON.stringify(this.root)), rotation: `Balance Factor at ${node.value} is ${balance}` });
                 }
 
-                if (balance > 1 && value < node.left.value) return this.rotateRight(node);
-                if (balance < -1 && value > node.right.value) return this.rotateLeft(node);
-                if (balance > 1 && value > node.left.value) {
+                if (balance > 1 && value.toString() < node.left.value.toString()) return this.rotateRight(node);
+                if (balance < -1 && value.toString() > node.right.value.toString()) return this.rotateLeft(node);
+                if (balance > 1 && value.toString() > node.left.value.toString()) {
                     node.left = this.rotateLeft(node.left);
                     return this.rotateRight(node);
                 }
-                if (balance < -1 && value < node.right.value) {
+                if (balance < -1 && value.toString() < node.right.value.toString()) {
                     node.right = this.rotateRight(node.right);
                     return this.rotateLeft(node);
                 }
@@ -149,7 +120,7 @@
         let tree;
         function buildTree() {
             let input = document.getElementById("numbers").value;
-            let values = input.split(",").map(Number);
+            let values = input.split(",").map(val => val.trim()).filter(val => val !== "");
             tree = new AVLTree();
             values.forEach(value => tree.insertValue(value));
             drawFinalTree();
@@ -205,7 +176,7 @@
             ctx.fill();
             ctx.stroke();
             ctx.fillStyle = "black";
-            ctx.fillText(node.value, x - 5, y + 5);
+            ctx.fillText(node.value.toString(), x - 5, y + 5);
         }
     </script>
 </body>
