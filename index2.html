@@ -33,8 +33,8 @@
 <body>
     <h1>AVL Tree Visualizer</h1>
     <input type="text" id="numbers" placeholder="Enter numbers or letters (comma-separated)">
-    <button id="generateTree">Generate AVL Tree</button>
-    <button id="displaySteps">Show Steps</button>
+    <button onclick="buildTree()">Generate AVL Tree</button>
+    <button onclick="showSteps()">Show Steps</button>
     <div class="steps-container" id="stepsContainer"></div>
     <canvas id="treeCanvas" width="800" height="500"></canvas>
 
@@ -84,33 +84,59 @@
                 return y;
             }
 
-            compareValues(a, b) {
-                if (!isNaN(a) && !isNaN(b)) return a - b; 
-                return a.toString().localeCompare(b.toString()); 
-            }
-
             insert(node, value) {
-                if (!node) return new Node(value);
-                if (this.compareValues(value, node.value) < 0) node.left = this.insert(node.left, value);
-                else if (this.compareValues(value, node.value) > 0) node.right = this.insert(node.right, value);
-                else return node; 
+    if (!node) return new Node(value);
 
-                node.height = 1 + Math.max(this.getHeight(node.left), this.getHeight(node.right));
-                let balance = this.getBalanceFactor(node);
+    // Ensure consistent comparison
+    let isNum = !isNaN(value);
+    let isNodeNum = !isNaN(node.value);
+    
+    let compareResult;
+    if (isNum && isNodeNum) {
+        compareResult = parseFloat(value) - parseFloat(node.value);
+    } else {
+        compareResult = value.toString().localeCompare(node.value.toString());
+    }
 
-                if (balance > 1 && this.compareValues(value, node.left.value) < 0) return this.rotateRight(node);
-                if (balance < -1 && this.compareValues(value, node.right.value) > 0) return this.rotateLeft(node);
-                if (balance > 1 && this.compareValues(value, node.left.value) > 0) {
-                    node.left = this.rotateLeft(node.left);
-                    return this.rotateRight(node);
-                }
-                if (balance < -1 && this.compareValues(value, node.right.value) < 0) {
-                    node.right = this.rotateRight(node.right);
-                    return this.rotateLeft(node);
-                }
+    if (compareResult < 0) {
+        node.left = this.insert(node.left, value);
+    } else if (compareResult > 0) {
+        node.right = this.insert(node.right, value);
+    } else {
+        return node; // Ignore duplicate values
+    }
 
-                return node;
-            }
+    // Update height
+    node.height = 1 + Math.max(this.getHeight(node.left), this.getHeight(node.right));
+
+    // Get balance factor
+    let balance = this.getBalanceFactor(node);
+
+    // Left Heavy (Right Rotation)
+    if (balance > 1 && ((isNum && parseFloat(value) < parseFloat(node.left.value)) || (!isNum && value < node.left.value))) {
+        return this.rotateRight(node);
+    }
+
+    // Right Heavy (Left Rotation)
+    if (balance < -1 && ((isNum && parseFloat(value) > parseFloat(node.right.value)) || (!isNum && value > node.right.value))) {
+        return this.rotateLeft(node);
+    }
+
+    // Left-Right Case (Double Rotation)
+    if (balance > 1 && ((isNum && parseFloat(value) > parseFloat(node.left.value)) || (!isNum && value > node.left.value))) {
+        node.left = this.rotateLeft(node.left);
+        return this.rotateRight(node);
+    }
+
+    // Right-Left Case (Double Rotation)
+    if (balance < -1 && ((isNum && parseFloat(value) < parseFloat(node.right.value)) || (!isNum && value < node.right.value))) {
+        node.right = this.rotateRight(node.right);
+        return this.rotateLeft(node);
+    }
+
+    return node;
+}
+
 
             insertValue(value) {
                 this.root = this.insert(this.root, value);
@@ -119,23 +145,24 @@
         }
 
         let tree;
-        document.getElementById("generateTree").addEventListener("click", () => {
+        function buildTree() {
             let input = document.getElementById("numbers").value;
             let values = input.split(",").map(val => val.trim()).filter(val => val !== "");
-            let isNumber = values.every(v => !isNaN(v));
-            let isAlphabet = values.every(v => /^[a-zA-Z]$/.test(v));
-            
-            if (!(isNumber || isAlphabet)) {
-                alert("Please enter either all numbers or all single letters.");
-                return;
-            }
-
             tree = new AVLTree();
             values.forEach(value => tree.insertValue(value));
             drawFinalTree();
-        });
+        }
 
-        document.getElementById("displaySteps").addEventListener("click", () => {
+        function drawFinalTree() {
+            let canvas = document.getElementById("treeCanvas");
+            let ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (tree && tree.root) {
+                drawTreeOnCanvas(ctx, tree.root, canvas.width / 2, 50, 200);
+            }
+        }
+
+        function showSteps() {
             let container = document.getElementById("stepsContainer");
             container.innerHTML = "";
             if (!tree || tree.steps.length === 0) return;
@@ -152,15 +179,31 @@
                 stepDiv.appendChild(stepCanvas);
                 container.appendChild(stepDiv);
             });
-        });
+        }
 
-        function drawFinalTree() {
-            let canvas = document.getElementById("treeCanvas");
-            let ctx = canvas.getContext("2d");
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (tree && tree.root) {
-                drawTreeOnCanvas(ctx, tree.root, canvas.width / 2, 50, 200);
+        function drawTreeOnCanvas(ctx, node, x, y, space) {
+            if (!node) return;
+            if (node.left) {
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x - space, y + 70);
+                ctx.stroke();
+                drawTreeOnCanvas(ctx, node.left, x - space, y + 70, space / 2);
             }
+            if (node.right) {
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + space, y + 70);
+                ctx.stroke();
+                drawTreeOnCanvas(ctx, node.right, x + space, y + 70, space / 2);
+            }
+            ctx.beginPath();
+            ctx.arc(x, y, 20, 0, 2 * Math.PI);
+            ctx.fillStyle = "lightblue";
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = "black";
+            ctx.fillText(node.value.toString(), x - 5, y + 5);
         }
     </script>
 </body>
